@@ -34,7 +34,10 @@ namespace Task_Tracker.Controllers
 
             var task = new TaskItem
             {
-                Title = dto.Title
+                
+                Title = dto.Title,
+                UserId = userId,
+                
             };
 
             dbContext.Tasks.Add(task);
