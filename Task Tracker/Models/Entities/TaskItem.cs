@@ -17,8 +17,8 @@ namespace Task_Tracker.Models.Entities
 
         //FK
 
-        public int UserID {  get; set; }
-        public required User User { get; set; }
+        public int UserId {  get; set; }
+        public User? User { get; set; }
 
 
     }
