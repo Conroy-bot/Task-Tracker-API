@@ -34,23 +34,31 @@ namespace Task_Tracker.Controllers
 
             var task = new TaskItem
             {
-                
                 Title = dto.Title,
                 UserId = userId,
-                
             };
 
             dbContext.Tasks.Add(task);
             dbContext.SaveChanges();
 
             return Ok($"{task.Title} has been added!" );
-
-
-
-
-
-
         }
+
+        [HttpGet("view")]
+        public IActionResult ViewTasks()
+        {
+            var userIdClaim = User.FindFirst("id");
+            if (userIdClaim == null || string.IsNullOrEmpty(userIdClaim.Value))
+            {
+                return Unauthorized("User id claim not found.");
+            }
+
+            var userId = int.Parse(userIdClaim.Value);
+
+            var userTasks=dbContext.Tasks.Where(t => t.UserId == userId).ToList();
+            return Ok(userTasks);
+        }
+
 
 
     }
