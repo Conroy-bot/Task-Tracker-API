@@ -24,17 +24,22 @@ namespace Task_Tracker.Controllers
         [HttpPost("create")]
         public IActionResult CreateTask(TaskDto dto)
         {
+            //Verify userId from token
             var userIdClaim = User.FindFirst("id");
             if (userIdClaim == null || string.IsNullOrEmpty(userIdClaim.Value))
             {
                 return Unauthorized("User id claim not found.");
             }
 
+            //store userId after parsing
             var userId = int.Parse(userIdClaim.Value);
 
+
+            //Create new instance of the task initally that the user inputted and automatically input the userId
             var task = new TaskItem
             {
                 Title = dto.Title,
+                Description=dto.Description,
                 UserId = userId,
             };
 
@@ -47,15 +52,25 @@ namespace Task_Tracker.Controllers
         [HttpGet("view")]
         public IActionResult ViewTasks()
         {
+            //Verify userId from token
             var userIdClaim = User.FindFirst("id");
             if (userIdClaim == null || string.IsNullOrEmpty(userIdClaim.Value))
             {
                 return Unauthorized("User id claim not found.");
             }
 
+            //store userId after parsing
             var userId = int.Parse(userIdClaim.Value);
 
-            var userTasks=dbContext.Tasks.Where(t => t.UserId == userId).ToList();
+            var userTasks = dbContext.Tasks.Where(t => t.UserId == userId)
+                .Select(t => new EditReadTaskDto
+                {
+                    Title = t.Title,
+                    Description = t.Description,
+                    DueDate = t.DueDate,
+                    Status = t.Status
+                }).ToList();
+
             return Ok(userTasks);
         }
 

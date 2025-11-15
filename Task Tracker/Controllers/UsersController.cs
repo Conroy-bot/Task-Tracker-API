@@ -31,16 +31,20 @@ namespace Task_Tracker.Controllers
         public async Task<IActionResult> Register(RegisterDto dto)
         
         {
+            //hashes the password that the user inputted (no format yet)
             var hashed = BCrypt.Net.BCrypt.HashPassword(dto.Password);
 
+            //created a new instance of the user based off of inputted details
             var user = new User
             {
                 Username = dto.Username,
                 HashedPassword = hashed
             };
 
+            //stores to the database
             dbContext.Users.Add(user);
 
+            //saves the changes to the database
             await dbContext.SaveChangesAsync();
 
 
@@ -51,13 +55,16 @@ namespace Task_Tracker.Controllers
         [HttpPost("login")]
         public IActionResult Login(LoginDto dto)
         {
+            //Brings up the first user that is found for username
             var user= dbContext.Users.FirstOrDefault(u => u.Username==dto.Username);
 
+            //Verifies if the user exists and then checks if the password they inputted matches the hashed password in the database
             if (user == null || !BCrypt.Net.BCrypt.Verify(dto.Password,user.HashedPassword))
             {
                 return Unauthorized("Invalid Credentials");
             }
 
+            //Generate the token based off of the user details
             var token = jwtTokenClass.GenerateToken(user);
 
             return Ok(new { token });

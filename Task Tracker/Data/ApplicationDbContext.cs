@@ -13,6 +13,9 @@ namespace Task_Tracker.Data
         {
         }
 
+        //represents how the models/classes are stored in the database
+        
+
         public DbSet<User> Users { get; set; }
         public DbSet<TaskItem> Tasks { get; set; }
     }
