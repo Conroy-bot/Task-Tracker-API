@@ -31,8 +31,16 @@ namespace Task_Tracker.Controllers
         public async Task<IActionResult> Register(RegisterDto dto)
         
         {
-            //hashes the password that the user inputted (no format yet)
-            var hashed = BCrypt.Net.BCrypt.HashPassword(dto.Password);
+            if (dto.Password == null)
+            {
+                return BadRequest("Please input a password");
+            }
+            else if(!dto.Password.Contains("@"))
+            {
+
+            }
+                //hashes the password that the user inputted (no format yet)
+                var hashed = BCrypt.Net.BCrypt.HashPassword(dto.Password);
 
             //created a new instance of the user based off of inputted details
             var user = new User

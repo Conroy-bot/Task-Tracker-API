@@ -1,4 +1,5 @@
 ﻿using Microsoft.EntityFrameworkCore;
+using System.ComponentModel.DataAnnotations;
 
 namespace Task_Tracker.Models.Entities
 {
@@ -9,6 +10,7 @@ namespace Task_Tracker.Models.Entities
   
         public required string Username { get; set; }
 
+ 
         public required string HashedPassword { get; set; }
 
 
