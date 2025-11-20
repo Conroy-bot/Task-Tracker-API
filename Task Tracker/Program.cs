@@ -28,7 +28,7 @@ namespace Task_Tracker
                 var securityScheme = new OpenApiSecurityScheme
                 {
                     Name = "Authorization",
-                    Description = "Enter 'Bearer' [space] and then your valid token in the text input below.\r\n\r\nExample: \"Bearer abcdef12345\"",
+                    Description = "Please input a token",
                     In = ParameterLocation.Header,
                     Type = SecuritySchemeType.Http,
                     Scheme = "bearer",

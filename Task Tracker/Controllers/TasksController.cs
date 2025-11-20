@@ -1,6 +1,8 @@
 ﻿using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Query.SqlExpressions;
 using System.Reflection.Metadata.Ecma335;
 using Task_Tracker.Data;
 using Task_Tracker.Models.DTO;
@@ -19,10 +21,9 @@ namespace Task_Tracker.Controllers
             dbContext = context;
         }
 
-
         
         [HttpPost("create")]
-        public IActionResult CreateTask(TaskDto dto)
+        public async Task<IActionResult> CreateTask(TaskDto dto)
         {
             //Verify userId from token
             var userIdClaim = User.FindFirst("id");
@@ -43,16 +44,59 @@ namespace Task_Tracker.Controllers
                 UserId = userId,
             };
 
-            dbContext.Tasks.Add(task);
-            dbContext.SaveChanges();
+            await dbContext.Tasks.AddAsync(task);
+            await dbContext.SaveChangesAsync();
 
             return Ok($"{task.Title} has been added!" );
         }
 
         [HttpGet("view")]
-        public IActionResult ViewTasks()
+        public async Task<IActionResult> ViewTasks()
         {
             //Verify userId from token
+            var userIdClaim = User.FindFirst("id");
+            if (userIdClaim == null || string.IsNullOrEmpty(userIdClaim.Value))
+            {
+                return Unauthorized("User id claim not found.");
+            }
+
+            
+            //store userId after parsing
+            var userId = int.Parse(userIdClaim.Value);
+
+            // Left join users -> tasks (group join) so we always return the user and an empty Tasks list if none exist
+            var userWithTasks = await dbContext.Users
+                .AsNoTracking()
+                .Where(u => u.Id == userId)
+                .GroupJoin(
+                    dbContext.Tasks.AsNoTracking(),
+                    u => u.Id,
+                    t => t.UserId,
+                    (u, tasks) => new
+                    {
+                        Username = u.Username,
+                        Tasks = tasks.Select(t => new EditReadTaskDto
+                        {
+                            Id = t.Id,
+                            Title = t.Title,
+                            Description = t.Description,
+                            DueDate = t.DueDate,
+                            Status = t.Status
+                        })
+                    }
+                )
+                .ToListAsync();
+
+            // Return single user object (or NotFound if user not found)
+            var result = userWithTasks.FirstOrDefault();
+            if (result == null) return NotFound("User not found.");
+
+            return Ok(result);
+        }
+
+        [HttpPatch("update")]
+        public async Task<IActionResult> UpdateTasks(UpdateTaskDto dto)
+        {
             var userIdClaim = User.FindFirst("id");
             if (userIdClaim == null || string.IsNullOrEmpty(userIdClaim.Value))
             {
@@ -62,16 +106,21 @@ namespace Task_Tracker.Controllers
             //store userId after parsing
             var userId = int.Parse(userIdClaim.Value);
 
-            var userTasks = dbContext.Tasks.Where(t => t.UserId == userId)
-                .Select(t => new EditReadTaskDto
-                {
-                    Title = t.Title,
-                    Description = t.Description,
-                    DueDate = t.DueDate,
-                    Status = t.Status
-                }).ToList();
+            // Load existing task and ensure it belongs to the current user
+            var existing = dbContext.Tasks.FirstOrDefault(t => t.Id == dto.Id && t.UserId == userId);
+            if (existing == null)
+            {
+                return NotFound("Task not found or you do not have permission to modify it.");
+            }
 
-            return Ok(userTasks);
+            // Update only allowed fields
+            existing.Title = dto.Title;
+            existing.Description = dto.Description;
+
+            await dbContext.SaveChangesAsync();
+
+            return Ok($"{existing.Title} has been updated!");
+
         }
 
 

@@ -2,17 +2,18 @@
 
 namespace Task_Tracker.Models.DTO
 {
-    public class EditReadTaskDto
+    public class UpdateTaskDto
     {
-        public int Id { get; set; }
+
         //The data transfer objects ensures that only required data is being accessed
-        public required string Title { get; set; }
+        public int Id { get; set; }
+        public string? Title { get; set; }
 
         public string? Description { get; set; }
 
-        public DateTime? DueDate { get; set; }
+      
 
-        public string? Status { get; set; } = "Pending";
+
 
 
     }
